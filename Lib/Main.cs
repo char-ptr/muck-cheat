@@ -42,31 +42,46 @@ namespace Lib
         }
         public void OnGUI()
         {
-            if (!inGame)
-            {
-                
-                GUI.Label(new Rect( 20, 20, 240, 100 ),"load into game");
-            }
-            
-            else 
+            // if (!inGame)
+            // {
+            //     
+            //     GUI.Label(new Rect( 20, 20, 240, 100 ),"load into game");
+            // }
+            //
+            // else 
                 GUI.Window(0,new Rect( 20, 20, 240, 500 ),DoMyWindow,"main window");
             
             if (Set.AutoPickupPower) 
                 GUI.Window(1,new Rect( 240+40, 20, 240, 500 ),PowerWindow,"Items");
             if (Set.ShowChestTools) 
-                GUI.Window(2,new Rect( (240+40)*2, 20, 240, 500 ),ChestWindow,"Spawn Tools");
+                GUI.Window(2,new Rect( (240+40)*2, 20, 520, 400 ),ChestWindow,"Spawn Tools");
         }
 
         void ChestWindow(int winid)
         {
-            int Ypos = 20;
-            Set.ChestItemId = new string(GUI.TextField(new Rect(10, Ypos += 20, 220, 20), Set.ChestItemId, 25).Where(v=>char.IsDigit(v)).ToArray());
-            if (GUI.Button(new Rect(10, Ypos+=20, 220, 20), "spawn"))
-            {
-                SpawnItem(Int32.Parse(Set.ChestItemId), 69);
-            }
-            GUI.Label(new Rect(10, Ypos+=20, 220, 20),$"Current item: {ItemManager.Instance.allItems[ Int32.Parse(Set.ChestItemId)].name} ({Set.ChestItemId})");
+            GUI.DragWindow(new Rect(0, 0, 0x1000, 30));
+            Settings.ScrollPos = GUI.BeginScrollView(Settings.ItemSpawnerScrollViewPosition, Settings.ScrollPos, Settings.ItemSpawnerCountPosition, false, true);
+            int x = 0;
+            int y = 0;
 
+            for (int i = 0; i < ItemManager.Instance.allScriptableItems.Count(); i++)
+            {
+                InventoryItem item = ItemManager.Instance.allScriptableItems[i];
+
+                if (GUI.Button(new Rect(x, y, 50, 50), new GUIContent(item.sprite.texture, "Spawn " + item.name)))
+                    SpawnItem(item.id, (int)Set.SpawnAmount);
+
+                if (i != 0 && i % 7 == 0)
+                { 
+                    x = 0; y += 60; 
+                }
+                else
+                    x += 60;
+            }
+            GUI.EndScrollView();
+            Set.SpawnAmount = GUI.VerticalSlider(new Rect(450, 60, 50, 330), Set.SpawnAmount, 666.0f, 1.0f);
+            GUI.Label(new Rect(465, 60, 50, 330),$"a:{(int)Set.SpawnAmount}");
+            Settings.ItemSpawnerCountPosition = new Rect(0, 0, 0, y+60);
         }
         void PowerWindow(int winid)
         {
@@ -162,6 +177,7 @@ namespace Lib
             GUI.Label(new Rect(10, Ypos+=20, 220, 20),"THIS WILL TAKE A WHILE.");
             GUI.color = Color.white;
             GUI.Label(new Rect(10, Ypos+=20, 100, 20),"by pozm");
+            GUI.Label(new Rect(10, Ypos+=20, 100, 20),Settings.ItemSpawnerCountPosition.height.ToString());
             GUI.BringWindowToFront(windowID);
         }
         
