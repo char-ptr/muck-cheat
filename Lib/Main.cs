@@ -12,9 +12,7 @@ namespace Lib
     {
         public void Start()
         {
-
-            _InventoryUI = InventoryUI.Instance;
-            _GameManager = GameManager.instance;
+            
             
         }
         public void Update()
@@ -26,19 +24,6 @@ namespace Lib
                 PlayerStatus.Instance.stamina = PlayerStatus.Instance.maxStamina;
             if (Set.InfHung)
                 PlayerStatus.Instance.hunger = PlayerStatus.Instance.maxHunger;
-            if (Set.AutoPickupPower)
-                // foreach (var pow in FindObjectsOfType<Powerup>())
-                // {
-                //     var item = pow.Value.GetComponent<Item>();
-                //     var item = pow.GetComponent<Item>();
-                //     if (item)
-                //     {
-                //         if (pow)
-                //             PowerupInventory.Instance.AddPowerup(pow.name,pow.id,pow.description);
-                //         
-                //     }
-                // }
-                Set.AutoPickupPower = false;
         }
         public void OnGUI()
         {
@@ -51,8 +36,8 @@ namespace Lib
             // else 
                 GUI.Window(0,new Rect( 20, 20, 240, 500 ),DoMyWindow,"main window");
             
-            if (Set.AutoPickupPower) 
-                GUI.Window(1,new Rect( 240+40, 20, 240, 500 ),PowerWindow,"Items");
+            if (Set.PlayerMan) 
+                GUI.Window(1,new Rect( 240+40, 20, 240, 500 ),PlayerWindow,"Player Manager");
             if (Set.ShowChestTools) 
                 GUI.Window(2,new Rect( (240+40)*2, 20, 520, 400 ),ChestWindow,"Spawn Tools");
         }
@@ -69,7 +54,10 @@ namespace Lib
                 InventoryItem item = ItemManager.Instance.allScriptableItems[i];
 
                 if (GUI.Button(new Rect(x, y, 50, 50), new GUIContent(item.sprite.texture, "Spawn " + item.name)))
-                    SpawnItem(item.id, (int)Set.SpawnAmount);
+                    if (Set.SpawnAtPlayer)
+                        SpawnItem(item.id, (int)Set.SpawnAmount,Set.Plr.transform.position);
+                    else
+                        SpawnItem(item.id, (int)Set.SpawnAmount);
 
                 if (i != 0 && i % 7 == 0)
                 { 
@@ -83,21 +71,49 @@ namespace Lib
             GUI.Label(new Rect(465, 60, 50, 330),$"a:{(int)Set.SpawnAmount}");
             Settings.ItemSpawnerCountPosition = new Rect(0, 0, 0, y+60);
         }
-        void PowerWindow(int winid)
+        void PlayerWindow(int winid)
         {
             int Ypos = 20;
-            foreach (var pow in FindObjectsOfType<Powerup>())
+            Set.Plr = ImGuiExtension.DropDown<PlayerManager>(new Rect(20, Ypos+=20, 210, 20), GameManager.players.Select(v=>v.Value).ToArray(), "Player","username");
+            
+            if (GUI.Button(new Rect(10, Ypos += 40, 220, 20), "Kill Player"))
             {
-                GUI.Label(new Rect( 20, Ypos+=20, 240, 100 ),$"{pow.name} | ${pow.id} | ${pow.description}");
+
+                ClientSend.PlayerHit(43444,Set.Plr.hitable.GetId(),434343,2,new Vector3());
             }
+            if (GUI.Button(new Rect(10, Ypos += 40, 220, 20), "Revive Player"))
+            {
+
+                ClientSend.RevivePlayer(Set.Plr.id,55555,true);
+                
+            }
+            Set.SpawnAtPlayer = GUI.Toggle(new Rect(10,Ypos+=20,220,20),Set.SpawnAtPlayer,"Spawn Items at player");
+            
         }
 
+        void wait()
+        {
+            
+        }
+        void SpawnItem(int id, int a,Vector3 pos)
+        {
+            Chest[] ches = ChestManager.Instance.chests.Where(v => !v.Value.inUse).Select(v=>v.Value).ToArray();
+            System.Random r = new System.Random();
+            Chest che = ches[r.Next(0, ches.Length)];
+            ClientSend.ChestUpdate(che.id,1,id,a);
+            base.Invoke("wait", (float)(NetStatus.GetPing() * 2) / 1000f);
+            var item = ChestManager.Instance.chests[che.id].cells[1];
+            InventoryUI.Instance.AddItemToInventory(item);
+            ClientSend.DropItemAtPosition(item.id,(int)Set.SpawnAmount,pos);
+            return;
+        }
         InventoryItem SpawnItem(int id, int a)
         {
             Chest[] ches = ChestManager.Instance.chests.Where(v => !v.Value.inUse).Select(v=>v.Value).ToArray();
             System.Random r = new System.Random();
             Chest che = ches[r.Next(0, ches.Length)];
             ClientSend.ChestUpdate(che.id,1,id,a);
+            base.Invoke("wait", (float)(NetStatus.GetPing() * 2) / 1000f);
             var item = ChestManager.Instance.chests[che.id].cells[1];
             InventoryUI.Instance.AddItemToInventory(item);
             return item;
@@ -111,7 +127,7 @@ namespace Lib
             Set.GodMode = GUI.Toggle(new Rect(10,Ypos+=20,100,20),Set.GodMode,"toggle gm");
             Set.InfHung = GUI.Toggle(new Rect(10,Ypos+=20,100,20),Set.InfHung,"toggle inf hung");
             Set.InfStam = GUI.Toggle(new Rect(10,Ypos+=20,100,20),Set.InfStam,"toggle inf stam");
-            // Set.AutoPickupPower = GUI.Toggle(new Rect(10,Ypos+=20,220,20),Set.AutoPickupPower,"toggle auto power");
+            Set.PlayerMan = GUI.Toggle(new Rect(10,Ypos+=20,220,20),Set.PlayerMan,"toggle Player tools");
             Set.ShowChestTools = GUI.Toggle(new Rect(10,Ypos+=20,220,20),Set.ShowChestTools,"toggle Spawn Tools");
             // Set.MakeAllChestsFree = GUI.Toggle(new Rect(10,80,100,20),Set.MakeAllChestsFree,"All free chests");
             
@@ -149,6 +165,10 @@ namespace Lib
                         .Invoke(boat,null);
                 }
             }
+            if (GUI.Button(new Rect(10, Ypos+=20, 100, 20), "Leave island"))
+            {
+                ClientSend.Interact(FindObjectOfType<FinishGameInteract>().GetId());
+            }
             if (GUI.Button(new Rect(10, Ypos+=20, 100, 20), "Teleport to boat"))
             {
                 PlayerMovement.Instance.transform.position = FindObjectOfType<Boat>().transform.position + new Vector3(0,20,0);
@@ -178,14 +198,12 @@ namespace Lib
             GUI.color = Color.white;
             GUI.Label(new Rect(10, Ypos+=20, 100, 20),"by pozm");
             GUI.Label(new Rect(10, Ypos+=20, 100, 20),Settings.ItemSpawnerCountPosition.height.ToString());
+            
             GUI.BringWindowToFront(windowID);
         }
         
         
         
-        private PlayerManager _PlayerManager;
-        private InventoryUI _InventoryUI;
-        private GameManager _GameManager;
         private Settings Set = new Settings();
         private bool inGame = false;
         private GUIContent content;

@@ -167,6 +167,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="ImGuiExtension.cs" />
         <Compile Include="loader.cs" />
         <Compile Include="Main.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
