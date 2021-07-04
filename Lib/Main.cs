@@ -61,12 +61,12 @@ namespace Lib
             var loopThrough = ItemManager.Instance.allScriptableItems;
             if (Set.ItemFilterType != null)
             {
-                loopThrough = ItemManager.Instance.allScriptableItems.Where(i => i.type == Set.ItemFilterType).ToArray();
+                loopThrough = loopThrough.Where(i => i.type == Set.ItemFilterType).ToArray();
             }
 
             if (!string.IsNullOrEmpty(Set.ItemSearch))
             {
-                loopThrough = ItemManager.Instance.allScriptableItems.Where(i => i.name.ToLower().Contains(Set.ItemSearch.ToLower())).ToArray();
+                loopThrough = loopThrough.Where(i => i.name.ToLower().Contains(Set.ItemSearch.ToLower())).ToArray();
             }
 
             for (int i =0; i < loopThrough.Length; i++)
