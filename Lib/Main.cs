@@ -1,0 +1,280 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.InteropServices;
+using UnityEngine;
+namespace Lib
+{
+    public class Main : MonoBehaviour
+    {
+        public void Start()
+        {
+
+            _InventoryUI = InventoryUI.Instance;
+            _GameManager = GameManager.instance;
+            
+        }
+        public void Update()
+        {
+            inGame = GameManager.state == GameManager.GameState.Playing;
+            if (Set.GodMode)
+                PlayerStatus.Instance.hp = PlayerStatus.Instance.maxHp;
+            if (Set.InfStam)
+                PlayerStatus.Instance.stamina = PlayerStatus.Instance.maxStamina;
+            if (Set.InfHung)
+                PlayerStatus.Instance.hunger = PlayerStatus.Instance.maxHunger;
+            if (Set.AutoPickupPower)
+                // foreach (var pow in FindObjectsOfType<Powerup>())
+                // {
+                //     var item = pow.Value.GetComponent<Item>();
+                //     var item = pow.GetComponent<Item>();
+                //     if (item)
+                //     {
+                //         if (pow)
+                //             PowerupInventory.Instance.AddPowerup(pow.name,pow.id,pow.description);
+                //         
+                //     }
+                // }
+                Set.AutoPickupPower = false;
+        }
+        public void OnGUI()
+        {
+            if (!inGame)
+            {
+                
+                GUI.Label(new Rect( 20, 20, 240, 100 ),"load into game");
+            }
+            
+            else 
+                GUI.Window(0,new Rect( 20, 20, 240, 500 ),DoMyWindow,"main window");
+            
+            if (Set.AutoPickupPower) 
+                GUI.Window(1,new Rect( 240+40, 20, 240, 500 ),PowerWindow,"Items");
+            if (Set.ShowChestTools) 
+                GUI.Window(2,new Rect( (240+40)*2, 20, 240, 500 ),ChestWindow,"Spawn Tools");
+        }
+
+        void ChestWindow(int winid)
+        {
+            int Ypos = 20;
+            Set.ChestItemId = new string(GUI.TextField(new Rect(10, Ypos += 20, 220, 20), Set.ChestItemId, 25).Where(v=>char.IsDigit(v)).ToArray());
+            if (GUI.Button(new Rect(10, Ypos+=20, 220, 20), "spawn"))
+            {
+                SpawnItem(Int32.Parse(Set.ChestItemId), 69);
+            }
+            GUI.Label(new Rect(10, Ypos+=20, 220, 20),$"Current item: {ItemManager.Instance.allItems[ Int32.Parse(Set.ChestItemId)].name} ({Set.ChestItemId})");
+
+        }
+        void PowerWindow(int winid)
+        {
+            int Ypos = 20;
+            foreach (var pow in FindObjectsOfType<Powerup>())
+            {
+                GUI.Label(new Rect( 20, Ypos+=20, 240, 100 ),$"{pow.name} | ${pow.id} | ${pow.description}");
+            }
+        }
+
+        InventoryItem SpawnItem(int id, int a)
+        {
+            Chest[] ches = ChestManager.Instance.chests.Where(v => !v.Value.inUse).Select(v=>v.Value).ToArray();
+            System.Random r = new System.Random();
+            Chest che = ches[r.Next(0, ches.Length)];
+            ClientSend.ChestUpdate(che.id,1,id,a);
+            var item = ChestManager.Instance.chests[che.id].cells[1];
+            InventoryUI.Instance.AddItemToInventory(item);
+            return item;
+        }
+        
+        void DoMyWindow(int windowID)
+        {
+            int Ypos = 20;
+
+            // toggles
+            Set.GodMode = GUI.Toggle(new Rect(10,Ypos+=20,100,20),Set.GodMode,"toggle gm");
+            Set.InfHung = GUI.Toggle(new Rect(10,Ypos+=20,100,20),Set.InfHung,"toggle inf hung");
+            Set.InfStam = GUI.Toggle(new Rect(10,Ypos+=20,100,20),Set.InfStam,"toggle inf stam");
+            // Set.AutoPickupPower = GUI.Toggle(new Rect(10,Ypos+=20,220,20),Set.AutoPickupPower,"toggle auto power");
+            Set.ShowChestTools = GUI.Toggle(new Rect(10,Ypos+=20,220,20),Set.ShowChestTools,"toggle Spawn Tools");
+            // Set.MakeAllChestsFree = GUI.Toggle(new Rect(10,80,100,20),Set.MakeAllChestsFree,"All free chests");
+            
+            //buttons
+
+            if (GUI.Button(new Rect(10, Ypos+=20, 100, 20), "All free chests"))
+            {
+                Set.MakeAllChestsFree = true;
+                Console.WriteLine("your mother");
+                foreach (var chest in FindObjectsOfType<LootContainerInteract>())
+                {
+                    chest.price = -1;
+                    Console.WriteLine("update");
+                }
+            }
+            if (GUI.Button(new Rect(10, Ypos+=20, 100, 20), "Pickup all"))
+            {
+                foreach (var item in FindObjectsOfType<PickupInteract>())
+                {
+                    item.Interact();
+                }
+            }if (GUI.Button(new Rect(10, Ypos+=20, 100, 20), "kill all mobs"))
+            {
+                foreach (var mob in FindObjectsOfType<HitableMob>())
+                {
+                    ClientSend.PlayerDamageMob(mob.GetId(), 323232, 3, 1, new Vector3(), 0);
+                }
+            }
+            if (GUI.Button(new Rect(10, Ypos+=20, 100, 20), "fix boat"))
+            {
+                foreach (var boat in FindObjectsOfType<Boat>())
+                {
+                    // fuck ur private loser
+                    typeof(Boat).GetMethod("SendBoatFinished", BindingFlags.NonPublic | BindingFlags.Instance)?
+                        .Invoke(boat,null);
+                }
+            }
+            if (GUI.Button(new Rect(10, Ypos+=20, 100, 20), "Teleport to boat"))
+            {
+                PlayerMovement.Instance.transform.position = FindObjectOfType<Boat>().transform.position + new Vector3(0,20,0);
+            }
+            if (GUI.Button(new Rect(10, Ypos += 40, 220, 20), "Give infinite money"))
+            {
+
+                SpawnItem(3, 232323);
+            }
+            if (GUI.Button(new Rect(10, Ypos += 20, 220, 20), "Unlock all achievements"))
+            {
+
+                var ah = AchievementManager.Instance;
+                
+                ah.Karlson();
+                ah.Jump();
+
+                foreach (var ach in Achievements)
+                {
+                    ach.RunAntiSuicide();
+                }
+                
+            }
+            //label
+            GUI.color = Color.red;
+            GUI.Label(new Rect(10, Ypos+=20, 220, 20),"THIS WILL TAKE A WHILE.");
+            GUI.color = Color.white;
+            GUI.Label(new Rect(10, Ypos+=20, 100, 20),"by pozm");
+            GUI.BringWindowToFront(windowID);
+        }
+        
+        
+        
+        private PlayerManager _PlayerManager;
+        private InventoryUI _InventoryUI;
+        private GameManager _GameManager;
+        private Settings Set = new Settings();
+        private bool inGame = false;
+        private GUIContent content;
+
+        private AchievementAntiSuicideHelper[] Achievements =
+        {
+            //You're not a fish & Muck this game
+            new AchievementAntiSuicideHelper("AddDeath",101,new object[] {PlayerStatus.DamageType.Drown}),
+            // movement shit
+            new AchievementAntiSuicideHelper("MoveDistance",100,new object[] {1000,1000}),
+            new AchievementAntiSuicideHelper("Jump",10000,new object[] {}),
+            new AchievementAntiSuicideHelper("NewDay",100,new object[] {100000}),
+            new AchievementAntiSuicideHelper("OpenChest",100,new object[] {}),
+            new AchievementAntiSuicideHelper("WieldedWeapon",1,new object[] {ItemManager.Instance.allItems.Single(v=>v.Value.name== "Night Blade").Value}),
+            // diff
+            new AchievementAntiSuicideHelper("StartGame",1,new object[] {GameSettings.Difficulty.Easy}),
+            new AchievementAntiSuicideHelper("StartGame",1,new object[] {GameSettings.Difficulty.Normal}),
+            new AchievementAntiSuicideHelper("StartGame",1,new object[] {GameSettings.Difficulty.Gamer}),
+            new AchievementAntiSuicideHelper("ItemCrafted",1,new object[] {ItemManager.Instance.allItems.Single(v=>v.Value.name== "Coin").Value,2222222}),
+
+            new AchievementAntiSuicideHelper("CheckGameOverAchievements",1,new object[] {-3},
+                () =>
+                {
+                    GameManager.instance.onlyRock = true;
+                    GameManager.instance.damageTaken = false;
+                    GameManager.instance.powerupsPickedup = false;
+                    GameManager.instance.currentDay = 0;
+                    GameManager.gameSettings.gameMode =GameSettings.GameMode.Survival ;
+                }),            
+            new AchievementAntiSuicideHelper("CheckGameOverAchievements",1,new object[] {-3},
+                () =>
+                {
+                    GameManager.instance.onlyRock = true;
+                    GameManager.instance.damageTaken = false;
+                    GameManager.instance.powerupsPickedup = false;
+                    GameManager.instance.currentDay = 0;
+                    GameManager.gameSettings.gameMode =GameSettings.GameMode.Survival ;
+                    NetworkController.Instance.nPlayers = 2;
+                }),
+            new AchievementAntiSuicideHelper("CheckGameOverAchievements",1,new object[] {-3},
+                () =>
+                {
+                    GameManager.instance.onlyRock = true;
+                    GameManager.instance.damageTaken = false;
+                    GameManager.instance.powerupsPickedup = false;
+                    GameManager.instance.currentDay = 0;
+                    GameManager.gameSettings.gameMode =GameSettings.GameMode.Survival ;
+                    NetworkController.Instance.nPlayers = 4;
+                }),
+            new AchievementAntiSuicideHelper("CheckGameOverAchievements",1,new object[] {-3},
+                () =>
+                {
+                    GameManager.instance.onlyRock = true;
+                    GameManager.instance.damageTaken = false;
+                    GameManager.instance.powerupsPickedup = false;
+                    GameManager.instance.currentDay = 0;
+                    GameManager.gameSettings.gameMode =GameSettings.GameMode.Survival ;
+                    NetworkController.Instance.nPlayers = 8;
+                }),
+            new AchievementAntiSuicideHelper("StartBattleTotem",1000,new object[] {}),
+            new AchievementAntiSuicideHelper("ReviveTeammate",5,new object[] {}),
+            new AchievementAntiSuicideHelper("PickupPowerup",1,new object[] {"Danis Milk"}, () =>
+            {
+                ((int[]) typeof(PowerupInventory).GetField("powerups").GetValue(null))[
+                    ItemManager.Instance.stringToPowerupId["Danis Milk"]] = 100;
+            }),
+            new AchievementAntiSuicideHelper("AddKill",10000,new object[] {PlayerStatus.WeaponHitType.Ranged}),
+
+        };
+    }
+
+    class AchievementAntiSuicideHelper
+    {
+        private string MethodName;
+        private int Amount;
+        private object[] Parameters;
+        private static Type ty= typeof(AchievementManager);
+        private Action setup; 
+
+        public AchievementAntiSuicideHelper(string mn, int a, object[] p)
+        {
+            MethodName = mn;
+            Amount = a;
+            Parameters = p;
+        }
+        public AchievementAntiSuicideHelper(string mn, int a, object[] p,Action s)
+        {
+            MethodName = mn;
+            Amount = a;
+            Parameters = p;
+            setup = s;
+        }
+        public void RunAntiSuicide()
+        {
+            if (setup != null)
+                setup();
+            var method = ty.GetMethod(MethodName);
+            if (method == null)
+                return;
+            for (int i = 0; i < Amount; i++)
+            {
+                method?.Invoke(AchievementManager.Instance,Parameters);
+            }
+        }
+    }
+
+
+}
