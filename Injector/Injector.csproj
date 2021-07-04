@@ -6,4 +6,10 @@
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Reference Include="SharpMonoInjector, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\Deps\SharpMonoInjector.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>
