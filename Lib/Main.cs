@@ -34,6 +34,7 @@ namespace Lib
             // }
             //
             // else 
+            GUI.depth = 10;
                 GUI.Window(0,new Rect( 20, 20, 240, 500 ),DoMyWindow,"main window");
             
             if (Set.PlayerMan) 
@@ -45,14 +46,33 @@ namespace Lib
         void ChestWindow(int winid)
         {
             GUI.DragWindow(new Rect(0, 0, 0x1000, 30));
+            
+            GUI.depth = 10;
+            
+            var filt = ImGuiExtension.DropDown(new Rect(10, 20, 200, 20), Enum.GetNames(typeof(InventoryItem.ItemType)), "Filter", null  );
+            Set.ItemSearch = GUI.TextField(new Rect(230, 20, 200, 20), Set.ItemSearch);
+
+            Set.ItemFilterType = (InventoryItem.ItemType)Enum.Parse(typeof(InventoryItem.ItemType), filt);
+            
             Settings.ScrollPos = GUI.BeginScrollView(Settings.ItemSpawnerScrollViewPosition, Settings.ScrollPos, Settings.ItemSpawnerCountPosition, false, true);
             int x = 0;
             int y = 0;
 
-            for (int i = 0; i < ItemManager.Instance.allScriptableItems.Count(); i++)
+            var loopThrough = ItemManager.Instance.allScriptableItems;
+            if (Set.ItemFilterType != null)
             {
-                InventoryItem item = ItemManager.Instance.allScriptableItems[i];
+                loopThrough = ItemManager.Instance.allScriptableItems.Where(i => i.type == Set.ItemFilterType).ToArray();
+            }
 
+            if (!string.IsNullOrEmpty(Set.ItemSearch))
+            {
+                loopThrough = ItemManager.Instance.allScriptableItems.Where(i => i.name.ToLower().Contains(Set.ItemSearch.ToLower())).ToArray();
+            }
+
+            for (int i =0; i < loopThrough.Length; i++)
+            {
+                var item = loopThrough[i];
+                
                 if (GUI.Button(new Rect(x, y, 50, 50), new GUIContent(item.sprite.texture, "Spawn " + item.name)))
                     if (Set.SpawnAtPlayer)
                         SpawnItem(item.id, (int)Set.SpawnAmount,Set.Plr.transform.position);

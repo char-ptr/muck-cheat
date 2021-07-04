@@ -31,7 +31,7 @@ namespace Lib
             {
                 int YPos = -20;
                 
-                GUI.depth = -21;
+                GUI.depth = 1;
                 GUI.BeginGroup(new Rect(pos.x,pos.y+pos.height, pos.width,Entries.Length*20));
 
                 foreach (var entry in Entries)
@@ -46,7 +46,7 @@ namespace Lib
                     
                 }
 
-                GUI.depth = 0;
+                GUI.depth = 10;
                 GUI.EndGroup();
                 
             }

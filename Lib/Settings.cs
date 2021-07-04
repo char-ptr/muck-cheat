@@ -16,6 +16,9 @@ namespace Lib
         public bool SpawnAtPlayer;
         public PlayerManager Plr;
 
+        public InventoryItem.ItemType? ItemFilterType = null;
+        public string ItemSearch = null;
+
         public static Rect ItemSpawnerCountPosition = new Rect();
         public static readonly Rect ItemSpawnerScrollViewPosition = new Rect(10, 60, 430, 330);
         public static Vector2 ScrollPos { get; set; } = Vector2.zero;
