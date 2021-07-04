@@ -8,4 +8,4 @@ https://store.steampowered.com/app/1625450/Muck/
 
 ## screenshot
 
-![](https://i.imgur.com/QwQhkNH.png)
+![](https://i.imgur.com/jW21KQg.png)
