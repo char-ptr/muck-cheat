@@ -16,7 +16,7 @@ namespace Lib
         public bool SpawnAtPlayer;
         public PlayerManager Plr;
 
-        public InventoryItem.ItemType? ItemFilterType = null;
+        public InventoryItem.ItemType? ItemFilterType = InventoryItem.ItemType.Item;
         public string ItemSearch = null;
 
         public static Rect ItemSpawnerCountPosition = new Rect();

@@ -12,7 +12,8 @@ namespace Lib
     {
         public void Start()
         {
-            
+            if (Loader.Debug)
+                Utils.CreateConsole();
             
         }
         public void Update()
@@ -49,7 +50,7 @@ namespace Lib
             
             GUI.depth = 10;
             
-            var filt = ImGuiExtension.DropDown(new Rect(10, 20, 200, 20), Enum.GetNames(typeof(InventoryItem.ItemType)), "Filter", null  );
+            var filt = ImGuiExtension.DropDown(1,new Rect(10, 20, 200, 20), Enum.GetNames(typeof(InventoryItem.ItemType)), "Filter", null  );
             Set.ItemSearch = GUI.TextField(new Rect(230, 20, 200, 20), Set.ItemSearch);
 
             Set.ItemFilterType = (InventoryItem.ItemType)Enum.Parse(typeof(InventoryItem.ItemType), filt);
@@ -94,7 +95,7 @@ namespace Lib
         void PlayerWindow(int winid)
         {
             int Ypos = 20;
-            Set.Plr = ImGuiExtension.DropDown<PlayerManager>(new Rect(20, Ypos+=20, 210, 20), GameManager.players.Select(v=>v.Value).ToArray(), "Player","username");
+            Set.Plr = ImGuiExtension.DropDown<PlayerManager>(6167,new Rect(20, Ypos+=20, 210, 20), GameManager.players.Select(v=>v.Value).ToArray(), "Player","username");
             
             if (GUI.Button(new Rect(10, Ypos += 40, 220, 20), "Kill Player"))
             {

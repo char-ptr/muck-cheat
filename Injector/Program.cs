@@ -12,7 +12,7 @@ namespace Injector
             string assemblyPath = Directory.GetCurrentDirectory()+"/Lib.dll";
             string @namespace = "Lib";
             string className = "Loader";
-            string methodName = "Init";
+            string methodName = ( args.Length > 0 && args[0].ToLower() == "true") ? "Init_D" : "Init";
             byte[] assembly;
             
             try {

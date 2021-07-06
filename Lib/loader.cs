@@ -7,12 +7,20 @@ namespace Lib
 {
     public class Loader : MonoBehaviour
     {
+        public static bool Debug = false;
         public static void Init()
         {
             GameObject _Load = new GameObject();
             _Load.AddComponent<Main>();
             GameObject.DontDestroyOnLoad(_Load);
         }
+
+        public static void Init_D()
+        {
+            Debug = true;
+            Init();
+        }
+        
         public static void Unload()
         {
             _Unload();
