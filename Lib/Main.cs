@@ -32,8 +32,8 @@ namespace Lib
         public void Update()
         {
             inGame = GameManager.state == GameManager.GameState.Playing;
-            // if (Settings.GodMode)
-            //     PlayerStatus.Instance.hp = PlayerStatus.Instance.maxHp;
+            if (Settings.GodMode)
+                PlayerStatus.Instance.hp = PlayerStatus.Instance.maxHp;
             if (Settings.InfStam)
                 PlayerStatus.Instance.stamina = PlayerStatus.Instance.maxStamina;
             if (Settings.InfHung)
