@@ -4,20 +4,23 @@ namespace Lib
 {
     public class Settings
     {
-        public bool GodMode;
-        public bool InfStam;
-        public bool InfHung;
-        public bool MakeAllChestsFree;
-        public bool PlayerMan;
-        public bool ShowChestTools;
-        public string ChestItemId = "1";
+        public static bool GodMode;
+        public static bool InfStam;
+        public static bool InfHung;
         
-        public float SpawnAmount = 1;
-        public bool SpawnAtPlayer;
-        public PlayerManager Plr;
+        public static bool PlayerMan;
+        public static bool ShowChestTools;
+        
+        public static float SpawnAmount = 1;
+        public static bool SpawnAtPlayer;
+        
+        
+        public static bool Sewerslide;
+        
+        public static PlayerManager Plr;
 
-        public InventoryItem.ItemType? ItemFilterType = InventoryItem.ItemType.Item;
-        public string ItemSearch = null;
+        public static InventoryItem.ItemType? ItemFilterType = InventoryItem.ItemType.Item;
+        public static string ItemSearch = null;
 
         public static Rect ItemSpawnerCountPosition = new Rect();
         public static readonly Rect ItemSpawnerScrollViewPosition = new Rect(10, 60, 430, 330);
